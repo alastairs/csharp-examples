@@ -46,13 +46,13 @@ namespace csharp_7
             var (exception, httpResponse) = await SendRequest("https://api.github.com/");
 
             // Pattern matching the exception, for an inelegant Either<Error, Result> implementation
-            switch (exception)
+            switch ((exception, httpResponse))
             {
-                case var ex when exception is HttpRequestException:
-                    Console.WriteLine($"The request failed 😞 {ex.Message}");
+                case var _ when exception is HttpRequestException:
+                    Console.WriteLine($"The request failed 😞 {exception.Message}");
                     return;
 
-                case null:
+                case var _ when exception is null:
                     var responseBody = await httpResponse.Content.ReadAsStringAsync();
                     dynamic parsedJson = JsonConvert.DeserializeObject(responseBody);
 
