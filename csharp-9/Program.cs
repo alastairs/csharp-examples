@@ -85,14 +85,11 @@ namespace csharp_9
         private static async Task<bool> WriteResponse(HttpResponseMessage response)
         {
             var responseBody = await response.Content.ReadAsStreamAsync();
-            var parsedJson = await JsonSerializer.DeserializeAsync<dynamic>(responseBody);
+            var parsedJson = await JsonSerializer.DeserializeAsync<Responses.IndexResponse>(responseBody, JsonOptions);
 
             // using declarations - calls Dispose() when the variable goes out of scope
             using var stdout = Console.OpenStandardOutput();
-            await JsonSerializer.SerializeAsync(
-                stdout,
-                parsedJson,
-                new JsonSerializerOptions { WriteIndented = true });
+            await JsonSerializer.SerializeAsync(stdout, parsedJson, JsonOptions);
 
             return true;
         }
@@ -102,5 +99,12 @@ namespace csharp_9
             Console.WriteLine($"The request failed 😞 {ex.Message}");
             return false;
         }
+
+        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
+            DictionaryKeyPolicy = new SnakeCaseNamingPolicy(),
+            WriteIndented = true
+        };
     }
 }
