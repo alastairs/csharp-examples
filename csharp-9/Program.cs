@@ -44,13 +44,6 @@ namespace csharp_9
 
         public static async Task Main(string[] args)
         {
-            Console.WriteLine("Program args are: " + string.Join(", ", args));
-            if (args[0].ToLowerInvariant() == "full")
-            {
-                await new GitHubExplorer().ExploreAsync();
-                return;
-            }
-
             // Target-typed new
             Program program = new();
             await program.RunAsync("https://api.github.com/");
