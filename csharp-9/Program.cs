@@ -7,6 +7,30 @@ using System.Threading.Tasks;
 
 namespace csharp_9
 {
+    // Short-hand record declaration:
+    // public record User(string Username, string Name);
+
+    // Medium-hand record declaration:
+    // public record User
+    // {
+    //     string Username;
+    //     string Name;
+    // }
+
+    // And equivalently:
+    // public record User
+    // {
+    //     string Username { get; }
+    //     string Name { get; }
+    // }
+
+    // MUTABLE record declaration:
+    // public record User
+    // {
+    //     string? Username { get; set; }
+    //     string? Name { get; set; }
+    // }
+
     public class Program
     {
         public Program()
@@ -15,22 +39,28 @@ namespace csharp_9
             Uri = "https://api.github.com/";
         }
 
-        public string Uri { get; init; } = null!;
+        // init-only accessor
+        public string? Uri { get; init; }
+
         public static async Task Main(string[] args)
         {
-            Program program = new()
+            Console.WriteLine("Program args are: " + string.Join(", ", args));
+            if (args[0].ToLowerInvariant() == "full")
             {
-                Uri = "null"
-            };
-            await program.RunAsync();
+                await new GitHubExplorer().ExploreAsync();
+                return;
+            }
+
+            // Target-typed new
+            Program program = new();
+            await program.RunAsync("https://api.github.com/");
         }
 
-        public async Task RunAsync()
+        public async Task<bool> RunAsync(string uri)
         {
-            // static local function
-            static async Task<(Exception? ex, HttpResponseMessage? res)> SendRequest(string url)
+            // Attributes on local functions
+            static async Task<(Exception? ex, HttpResponseMessage? res)> SendRequest([NotNull] string url)
             {
-                // Null-coalescing assignment
                 url ??= "https://api.github.com/";
 
                 Console.WriteLine("Calling GitHub 🐙🐱");
@@ -49,21 +79,17 @@ namespace csharp_9
                 }
             }
 
-            // Improved pattern matching, with switch expressions, for a much more elegant
-            // Either<Error, Result> implementation
-            var response = await SendRequest(Uri);
-            switch (response)
+            var result = await SendRequest(uri);
+            return result switch
             {
-                case (Exception ex, null):
-                    Console.WriteLine($"The request failed 😞 {ex.Message}");
-                    return;
-                case (null, HttpResponseMessage res):
-                    await WriteResponse(res);
-                    return;
-            }
+                // Type patterns finally give us a slick Either<TError, TResult> implementation
+                (Exception, null) => WriteError(result.ex),
+                (null, HttpResponseMessage) => await WriteResponse(result.res),
+                _ => throw new InvalidOperationException()
+            };
         }
 
-        private static async Task WriteResponse(HttpResponseMessage response)
+        private static async Task<bool> WriteResponse(HttpResponseMessage response)
         {
             var responseBody = await response.Content.ReadAsStreamAsync();
             var parsedJson = await JsonSerializer.DeserializeAsync<dynamic>(responseBody);
@@ -74,6 +100,14 @@ namespace csharp_9
                 stdout,
                 parsedJson,
                 new JsonSerializerOptions { WriteIndented = true });
+
+            return true;
+        }
+
+        private static bool WriteError(Exception ex)
+        {
+            Console.WriteLine($"The request failed 😞 {ex.Message}");
+            return false;
         }
     }
 }
