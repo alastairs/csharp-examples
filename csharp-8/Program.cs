@@ -10,12 +10,13 @@ namespace csharp_8
     public class Program
     {
         public Program() => Console.OutputEncoding = Encoding.UTF8;
+
         public static async Task Main(string[] args)
         {
             await new Program().RunAsync("https://api.github.com/");
         }
 
-        public async Task RunAsync([NotNull]string uri)
+        public async Task<bool> RunAsync([NotNull] string uri)
         {
             // static local function
             static async Task<(Exception? ex, HttpResponseMessage? res)> SendRequest(string url)
@@ -42,18 +43,15 @@ namespace csharp_8
             // Improved pattern matching, with switch expressions, for a much more elegant
             // Either<Error, Result> implementation
             var response = await SendRequest(uri);
-            switch (response)
+            return response switch
             {
-                case (Exception ex, null):
-                    Console.WriteLine($"The request failed 😞 {ex.Message}");
-                    return;
-                case (null, HttpResponseMessage res):
-                    await WriteResponse(res);
-                    return;
-            }
+                (Exception ex, null) => WriteError(ex),
+                (null, HttpResponseMessage res) => await WriteResponse(res),
+                _ => throw new InvalidOperationException()
+            };
         }
 
-        private static async Task WriteResponse(HttpResponseMessage response)
+        private static async Task<bool> WriteResponse(HttpResponseMessage response)
         {
             var responseBody = await response.Content.ReadAsStreamAsync();
             var parsedJson = await JsonSerializer.DeserializeAsync<dynamic>(responseBody);
@@ -64,6 +62,21 @@ namespace csharp_8
                 stdout,
                 parsedJson,
                 new JsonSerializerOptions { WriteIndented = true });
+
+            return true;
         }
+
+        private static bool WriteError(Exception ex)
+        {
+            Console.WriteLine($"The request failed 😞 {ex.Message}");
+            return false;
+        }
+
+        // And more besides!
+        // - await foreach
+        // - Default interface implementations (methods only)
+
+        // Framework features not covered here:
+        // - IAsyncDisposable
     }
 }
