@@ -20,8 +20,8 @@ namespace csharp_7
 
         public async Task RunAsync()
         {
-            // Local function, returning a ValueTuple
-            async Task<(Exception, HttpResponseMessage)> SendRequest(string url)
+            // Local function, returning a named ValueTuple
+            async Task<(Exception ex, HttpResponseMessage res)> SendRequest(string url)
             {
                 // throw expression
                 url = url ?? throw new ArgumentNullException(nameof(url));
@@ -43,17 +43,17 @@ namespace csharp_7
             }
 
             // Tuple destructuring, and supports discarding any tuple member with _
-            var (exception, httpResponse) = await SendRequest("https://api.github.com/");
+            var result = await SendRequest("https://api.github.com/");
 
             // Pattern matching the exception, for an inelegant Either<Error, Result> implementation
-            switch ((exception, httpResponse))
+            switch (result)
             {
-                case var _ when exception is HttpRequestException:
-                    Console.WriteLine($"The request failed 😞 {exception.Message}");
+                case var _ when result.ex is HttpRequestException:
+                    Console.WriteLine($"The request failed 😞 {result.ex.Message}");
                     return;
 
-                case var _ when exception is null:
-                    var responseBody = await httpResponse.Content.ReadAsStringAsync();
+                case var _ when result.ex is null:
+                    var responseBody = await result.res.Content.ReadAsStringAsync();
                     dynamic parsedJson = JsonConvert.DeserializeObject(responseBody);
 
                     await Console.WriteLine(JsonConvert.SerializeObject(parsedJson, Formatting.Indented));
@@ -66,5 +66,9 @@ namespace csharp_7
         // * _ can be used as a digit separator in numeric constants
         // * `out` variables can now be declared inline, with an inferred type (var) if desired
         // * New `private protected` access modifier for class members
+
+        // Framework features not covered here:
+        // - Memory<T>, Span<T>
+        // - System.IO.Pipelines
     }
 }
