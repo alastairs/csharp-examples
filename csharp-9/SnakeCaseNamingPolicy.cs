@@ -5,7 +5,7 @@ namespace csharp_9
 {
     internal class SnakeCaseNamingPolicy : JsonNamingPolicy
     {
-        // Implementation sneakily taken from https://github.com/xsoheilalizadeh/SnakeCaseConversion/blob/master/SnakeCaseConversionBenchmark/SnakeCaseConventioneerBenchmark.cs#L49
+        // Implementation taken from https://github.com/xsoheilalizadeh/SnakeCaseConversion/blob/master/SnakeCaseConversionBenchmark/SnakeCaseConventioneerBenchmark.cs#L49
         // with the modification proposed here: https://github.com/dotnet/runtime/issues/782#issuecomment-613805803
         public override string ConvertName(string name)
         {
